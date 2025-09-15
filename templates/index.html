@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - HaatKhata{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto text-center">
+        <div class="hero-section py-5">
+            <h1 class="display-4 fw-bold text-primary">
+                <i class="fas fa-book"></i> HaatKhata
+            </h1>
+            <p class="lead mb-4">
+                হাতেখড়ি থেকে হাতেখাতা - আপনার কাজের খাতা। 
+                Create, manage, and track your tasks efficiently with HaatKhata.
+            </p>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                    <i class="fas fa-user-plus"></i> Get Started
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-list-ul fa-3x text-primary"></i>
+            </div>
+            <h4>Organize Tasks</h4>
+            <p class="text-muted">Create and organize your tasks with categories, priorities, and due dates.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-chart-line fa-3x text-success"></i>
+            </div>
+            <h4>Track Progress</h4>
+            <p class="text-muted">Monitor your productivity with detailed statistics and progress tracking.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-search fa-3x text-info"></i>
+            </div>
+            <h4>Find Quickly</h4>
+            <p class="text-muted">Search and filter your tasks to find exactly what you're looking for.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-lg-10 mx-auto">
+        <div class="card bg-light">
+            <div class="card-body text-center py-5">
+                <h3 class="card-title">10 Powerful Features</h3>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled text-start">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> User Registration & Login</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Interactive Dashboard</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Create & Edit Tasks</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Task Categories</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Priority Levels</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled text-start">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Status Tracking</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Search & Filter</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Due Date Management</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> User Profile</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Responsive Design</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
