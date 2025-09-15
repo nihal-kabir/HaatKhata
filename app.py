@@ -1,14 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
-from models import db, User, Task, Category
+from database import db_manager, User, Task, Category
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
-import pymysql
-
-# Install PyMySQL as MySQLdb for SQLAlchemy
-pymysql.install_as_MySQLdb()
 
 # Load environment variables
 load_dotenv()
@@ -28,11 +24,12 @@ app = Flask(__name__)
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///task_manager.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize extensions
-db.init_app(app)
+# Initialize database
+with app.app_context():
+    db_manager.init_database()
+
+# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -40,7 +37,7 @@ login_manager.login_message = 'Please log in to access this page.'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return User.get_by_id(int(user_id))
 
 # Routes
 
@@ -62,28 +59,28 @@ def register():
         last_name = request.form['last_name']
         
         # Check if user already exists
-        if User.query.filter_by(username=username).first():
+        if User.get_by_username(username):
             flash('Username already exists!', 'error')
             return render_template(TEMPLATE_REGISTER)
         
-        if User.query.filter_by(email=email).first():
+        if User.get_by_email(email):
             flash('Email already registered!', 'error')
             return render_template(TEMPLATE_REGISTER)
         
         # Create new user
-        user = User(
-            username=username,
-            email=email,
-            first_name=first_name,
-            last_name=last_name
-        )
-        user.set_password(password)
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('login'))
+        try:
+            user = User.create(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name
+            )
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            flash('Registration failed. Please try again.', 'error')
+            return render_template(TEMPLATE_REGISTER)
     
     return render_template(TEMPLATE_REGISTER)
 
@@ -94,7 +91,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        user = User.query.filter_by(username=username).first()
+        user = User.get_by_username(username)
         
         if user and user.check_password(password):
             login_user(user)
@@ -117,30 +114,19 @@ def logout():
 @login_required
 def dashboard():
     """User dashboard with statistics"""
-    # Get user's task statistics
-    total_tasks = Task.query.filter_by(user_id=current_user.id).count()
-    completed_tasks = Task.query.filter_by(user_id=current_user.id, status='completed').count()
-    pending_tasks = Task.query.filter_by(user_id=current_user.id, status='pending').count()
-    in_progress_tasks = Task.query.filter_by(user_id=current_user.id, status='in_progress').count()
+    # Get user's task statistics using raw SQL
+    stats = Task.get_stats_by_user(current_user.id)
     
     # Get recent tasks
-    recent_tasks = Task.query.filter_by(user_id=current_user.id)\
-                           .order_by(Task.created_at.desc())\
-                           .limit(5).all()
-    
-    # Get overdue tasks
-    overdue_tasks = Task.query.filter_by(user_id=current_user.id)\
-                            .filter(Task.due_date < datetime.now())\
-                            .filter(Task.status != 'completed')\
-                            .count()
+    recent_tasks = Task.get_by_user(current_user.id)[:5]  # Get first 5 tasks
     
     return render_template(TEMPLATE_DASHBOARD,
-                         total_tasks=total_tasks,
-                         completed_tasks=completed_tasks,
-                         pending_tasks=pending_tasks,
-                         in_progress_tasks=in_progress_tasks,
+                         total_tasks=stats['total'],
+                         completed_tasks=stats['completed'],
+                         pending_tasks=stats['pending'],
+                         in_progress_tasks=stats['in_progress'],
                          recent_tasks=recent_tasks,
-                         overdue_tasks=overdue_tasks)
+                         overdue_tasks=stats['overdue'])
 
 @app.route('/tasks')
 @login_required
@@ -152,21 +138,20 @@ def tasks():
     priority_filter = request.args.get('priority', '')
     search_query = request.args.get('search', '')
     
-    # Build query
-    query = Task.query.filter_by(user_id=current_user.id)
+    # Use raw SQL to get filtered tasks
+    category_id = int(category_filter) if category_filter else None
+    tasks = Task.get_by_user(
+        user_id=current_user.id,
+        status=status_filter if status_filter else None,
+        category_id=category_id,
+        search=search_query if search_query else None
+    )
     
-    if status_filter:
-        query = query.filter_by(status=status_filter)
-    if category_filter:
-        query = query.filter_by(category_id=category_filter)
+    # Filter by priority if specified
     if priority_filter:
-        query = query.filter_by(priority=priority_filter)
-    if search_query:
-        query = query.filter(Task.title.contains(search_query) | 
-                           Task.description.contains(search_query))
+        tasks = [task for task in tasks if task.priority == priority_filter]
     
-    tasks = query.order_by(Task.created_at.desc()).all()
-    categories = Category.query.all()
+    categories = Category.get_all()
     
     return render_template(TEMPLATE_TASKS, 
                          tasks=tasks, 
@@ -193,71 +178,90 @@ def create_task():
                 due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
             except ValueError:
                 flash('Invalid date format!', 'error')
-                return render_template(TEMPLATE_CREATE_TASK, categories=Category.query.all())
+                return render_template(TEMPLATE_CREATE_TASK, categories=Category.get_all())
         
-        task = Task(
-            title=title,
-            description=description,
-            priority=priority,
-            due_date=due_date,
-            category_id=category_id,
-            user_id=current_user.id
-        )
-        
-        db.session.add(task)
-        db.session.commit()
-        
-        flash('Task created successfully!', 'success')
-        return redirect(url_for('tasks'))
+        try:
+            task = Task.create(
+                title=title,
+                description=description,
+                priority=priority,
+                due_date=due_date,
+                category_id=int(category_id) if category_id else None,
+                user_id=current_user.id
+            )
+            flash('Task created successfully!', 'success')
+            return redirect(url_for('tasks'))
+        except Exception as e:
+            flash('Failed to create task. Please try again.', 'error')
+            return render_template(TEMPLATE_CREATE_TASK, categories=Category.get_all())
     
-    categories = Category.query.all()
+    categories = Category.get_all()
     return render_template(TEMPLATE_CREATE_TASK, categories=categories)
 
 @app.route('/task/<int:task_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_task(task_id):
     """Edit existing task"""
-    task = Task.query.filter_by(id=task_id, user_id=current_user.id).first_or_404()
+    task = Task.get_by_id(task_id)
+    if not task or task.user_id != current_user.id:
+        flash('Task not found!', 'error')
+        return redirect(url_for('tasks'))
     
     if request.method == 'POST':
-        task.title = request.form['title']
-        task.description = request.form['description']
-        task.priority = request.form['priority']
-        task.status = request.form['status']
-        task.category_id = request.form.get('category_id') or None
+        title = request.form['title']
+        description = request.form['description']
+        priority = request.form['priority']
+        status = request.form['status']
+        category_id = request.form.get('category_id') or None
         
+        due_date = None
         due_date_str = request.form.get('due_date')
         if due_date_str:
             try:
-                task.due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
+                due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
             except ValueError:
                 flash('Invalid date format!', 'error')
-                return render_template(TEMPLATE_EDIT_TASK, task=task, categories=Category.query.all())
-        else:
-            task.due_date = None
+                return render_template(TEMPLATE_EDIT_TASK, task=task, categories=Category.get_all())
         
-        db.session.commit()
-        flash('Task updated successfully!', 'success')
-        return redirect(url_for('tasks'))
+        try:
+            task.update(
+                title=title,
+                description=description,
+                priority=priority,
+                status=status,
+                category_id=int(category_id) if category_id else None,
+                due_date=due_date
+            )
+            flash('Task updated successfully!', 'success')
+            return redirect(url_for('tasks'))
+        except Exception as e:
+            flash('Failed to update task. Please try again.', 'error')
     
-    categories = Category.query.all()
+    categories = Category.get_all()
     return render_template(TEMPLATE_EDIT_TASK, task=task, categories=categories)
 
 @app.route('/task/<int:task_id>/delete', methods=['POST'])
 @login_required
 def delete_task(task_id):
     """Delete task"""
-    task = Task.query.filter_by(id=task_id, user_id=current_user.id).first_or_404()
-    db.session.delete(task)
-    db.session.commit()
-    flash('Task deleted successfully!', 'success')
+    task = Task.get_by_id(task_id)
+    if not task or task.user_id != current_user.id:
+        flash('Task not found!', 'error')
+        return redirect(url_for('tasks'))
+    
+    try:
+        task.delete()
+        flash('Task deleted successfully!', 'success')
+    except Exception as e:
+        flash('Failed to delete task. Please try again.', 'error')
+    
     return redirect(url_for('tasks'))
 
 @app.route('/categories')
 @login_required
 def categories():
     """Manage categories"""
-    categories = Category.query.all()
+    categories = Category.get_all()
     return render_template(TEMPLATE_CATEGORIES, categories=categories)
 
 @app.route('/category/new', methods=['POST'])
@@ -268,11 +272,12 @@ def create_category():
     description = request.form.get('description', '')
     color = request.form.get('color', '#007bff')
     
-    category = Category(name=name, description=description, color=color)
-    db.session.add(category)
-    db.session.commit()
+    try:
+        category = Category.create(name=name, description=description, color=color)
+        flash('Category created successfully!', 'success')
+    except Exception as e:
+        flash('Failed to create category. Please try again.', 'error')
     
-    flash('Category created successfully!', 'success')
     return redirect(url_for('categories'))
 
 @app.route('/profile')
@@ -285,35 +290,27 @@ def profile():
 @login_required
 def edit_profile():
     """Edit user profile"""
-    current_user.first_name = request.form['first_name']
-    current_user.last_name = request.form['last_name']
-    current_user.email = request.form['email']
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
+    email = request.form['email']
     
     # Check if email is already taken by another user
-    existing_user = User.query.filter_by(email=current_user.email).first()
+    existing_user = User.get_by_email(email)
     if existing_user and existing_user.id != current_user.id:
         flash('Email already in use by another user!', 'error')
         return redirect(url_for('profile'))
     
-    db.session.commit()
-    flash('Profile updated successfully!', 'success')
-    return redirect(url_for('profile'))
-
-# Initialize database
-with app.app_context():
-    db.create_all()
+    try:
+        current_user.update(
+            first_name=first_name,
+            last_name=last_name,
+            email=email
+        )
+        flash('Profile updated successfully!', 'success')
+    except Exception as e:
+        flash('Failed to update profile. Please try again.', 'error')
     
-    # Create default categories if they don't exist
-    if not Category.query.first():
-        default_categories = [
-            Category(name='Work', description='Work-related tasks', color='#007bff'),
-            Category(name='Personal', description='Personal tasks', color='#28a745'),
-            Category(name='Shopping', description='Shopping lists', color='#ffc107'),
-            Category(name='Health', description='Health and fitness', color='#dc3545'),
-        ]
-        for category in default_categories:
-            db.session.add(category)
-        db.session.commit()
+    return redirect(url_for('profile'))
 
 if __name__ == '__main__':
     app.run(debug=True)
