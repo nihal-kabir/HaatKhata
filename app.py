@@ -25,15 +25,14 @@ app = Flask(__name__)
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 
-# Initialize database
-with app.app_context():
-    db_manager.init_database()
-
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access this page.'
+
+# Database initialization - will be handled by init_db.py script during deployment
+# Or you can call it manually in production
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -313,4 +312,6 @@ def edit_profile():
     return redirect(url_for('profile'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+    app.run(host='0.0.0.0', port=port, debug=debug)

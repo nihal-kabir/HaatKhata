@@ -1,6 +1,7 @@
 
 import pymysql
 import os
+import time
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from contextlib import contextmanager
@@ -9,54 +10,73 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Database configuration from environment variables
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 3306))
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASS = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "task_manager_db")
+DB_CHARSET = os.getenv("DB_CHARSET", "utf8mb4")
+DB_RETRY_SECONDS = int(os.getenv("DB_RETRY_SECONDS", 2))
+DB_RETRY_MAX = int(os.getenv("DB_RETRY_MAX", 10))
+
 class DatabaseManager:
-    """Manages database connections and operations"""
+    """Manages database connections and operations with retry logic"""
     
     def __init__(self):
-        self.host = os.getenv('DB_HOST', 'localhost')
-        self.user = os.getenv('DB_USER', 'root')
-        self.password = os.getenv('DB_PASSWORD', '')
-        self.database = os.getenv('DB_NAME', 'task_manager_db')
-        self.charset = os.getenv('DB_CHARSET', 'utf8mb4')
+        self.host = DB_HOST
+        self.port = DB_PORT
+        self.user = DB_USER
+        self.password = DB_PASS
+        self.database = DB_NAME
+        self.charset = DB_CHARSET
     
     @contextmanager
     def get_connection(self):
-        """Context manager for database connections"""
-        connection = None
-        try:
-            connection = pymysql.connect(
-                host=self.host,
-                user=self.user,
-                password=self.password,
-                database=self.database,
-                charset=self.charset,
-                cursorclass=pymysql.cursors.DictCursor
-            )
-            yield connection
-        except Exception as e:
-            if connection:
-                connection.rollback()
-            raise e
-        finally:
-            if connection:
-                connection.close()
+        """Context manager for database connections with retry logic"""
+        last_exc = None
+        for attempt in range(1, DB_RETRY_MAX + 1):
+            try:
+                connection = pymysql.connect(
+                    host=self.host,
+                    port=self.port,
+                    user=self.user,
+                    password=self.password,
+                    database=self.database,
+                    charset=self.charset,
+                    cursorclass=pymysql.cursors.DictCursor,
+                    autocommit=True,
+                    connect_timeout=5
+                )
+                try:
+                    yield connection
+                finally:
+                    connection.close()
+                return
+            except Exception as e:
+                last_exc = e
+                print(f"DB connection attempt {attempt}/{DB_RETRY_MAX} failed: {e}")
+                if attempt < DB_RETRY_MAX:
+                    time.sleep(DB_RETRY_SECONDS)
+        
+        # If we get here all retries failed — raise the last exception
+        raise last_exc
     
     def execute_query(self, query, params=None, fetch=False, fetch_all=True):
         """Execute SQL query and return results"""
         with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, params)
-            
-            if fetch:
-                if fetch_all:
-                    result = cursor.fetchall()
+            with conn.cursor() as cursor:
+                cursor.execute(query, params or ())
+                if fetch:
+                    if fetch_all:
+                        return cursor.fetchall()
+                    else:
+                        return cursor.fetchone()
                 else:
-                    result = cursor.fetchone()
-            else:
-                result = cursor.lastrowid
-                conn.commit()
-            
-            return result
+                    try:
+                        return cursor.fetchall()
+                    except:
+                        return None
     
     def init_database(self):
         """Initialize database tables"""
