@@ -1,72 +1,154 @@
-# HaatKhata - Smart Task Management System
+# HaatKhata
 
-**হাতেখড়ি থেকে হাতেখাতা - আপনার কাজের খাতা**
+A web-based task management application built with Flask, featuring user authentication, task organization with categories, and comprehensive task tracking capabilities.
 
-## 🌟 About HaatKhata
+## Overview
 
-HaatKhata (হাতেখাতা) brings the traditional Bengali concept of keeping an organized notebook into the digital age. This Flask-based web application helps you manage tasks, track progress, and stay organized with a simple, intuitive interface.
+HaatKhata is a full-featured task management system that allows users to create, organize, and track their tasks efficiently. The application provides a clean, responsive interface for managing personal and professional tasks with advanced filtering and categorization options.
 
-## ✨ Features
+## Features
 
-- 🔐 **User Authentication** - Secure registration and login
-- 📊 **Dashboard** - Visual overview of your tasks and progress
-- 📝 **Task Management** - Create, edit, delete, and organize tasks
-- 🏷️ **Categories** - Organize tasks with color-coded categories
-- 🔍 **Search & Filter** - Find tasks quickly with advanced filtering
-- 👤 **User Profiles** - Manage your account and preferences
-- 📱 **Responsive Design** - Works on desktop and mobile devices
-- 🗄️ **MySQL Database** - Reliable, scalable data storage
-- 🐳 **Docker Ready** - Easy deployment with containerization
-- ☁️ **Cloud Deployable** - Ready for production deployment
+- **User Authentication**: Secure user registration and login system with password hashing
+- **Task Management**: Complete CRUD operations for tasks with title, description, priority levels, and due dates
+- **Categories**: Color-coded task categorization for better organization
+- **Dashboard**: Visual overview with task statistics and recent activity
+- **Advanced Filtering**: Search and filter tasks by status, category, priority, and keywords
+- **Responsive Design**: Mobile-friendly interface built with Bootstrap 5
+- **Database Integration**: MySQL database with proper foreign key relationships
 
-## 🚀 Quick Start
+## Technology Stack
 
+- **Backend**: Flask 2.3.3, Python
+- **Database**: MySQL with PyMySQL connector
+- **Authentication**: Flask-Login with Werkzeug password hashing
+- **Frontend**: HTML5, CSS3, Bootstrap 5, Jinja2 templating
+- **Configuration**: Environment-based configuration with python-dotenv
+- **Production**: Gunicorn WSGI server ready
+
+## Database Schema
+
+### Users Table
+- User credentials and profile information
+- Password hashing for security
+- Relationship with tasks
+
+### Categories Table
+- Task categorization with custom colors
+- Optional descriptions
+- Many-to-many relationship with tasks
+
+### Tasks Table
+- Complete task information (title, description, status, priority)
+- Due date tracking with overdue detection
+- Foreign key relationships to users and categories
+- Automatic timestamp management
+
+## Installation
+
+1. Clone the repository:
 ```bash
-# Clone the repository
 git clone https://github.com/nihal-kabir/HaatKhata.git
 cd HaatKhata
+```
 
-# Install dependencies
+2. Create and activate a virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
 pip install -r requirements.txt
+```
 
-<<<<<<< HEAD
-# Set up environment variables
+4. Configure environment variables:
+```bash
 cp .env.example .env
-# Edit .env file with your database credentials and configuration
-=======
-# Set up environment
-cp .env.example .env
->>>>>>> ffa5409118007bde501162ede7bff4456d95fb8e
+```
+Edit `.env` with your database configuration:
+- `DB_HOST`: MySQL server host
+- `DB_USER`: Database username  
+- `DB_PASSWORD`: Database password
+- `DB_NAME`: Database name
+- `SECRET_KEY`: Flask application secret key
 
-# Run the application
+5. Initialize the database:
+The application automatically creates necessary tables on first run.
+
+6. Run the application:
+```bash
 python app.py
 ```
 
-Visit `http://localhost:5000` to start using HaatKhata!
+The application will be available at `http://localhost:5000`
 
-## 🛠️ Technology Stack
+## Application Routes
 
-- **Backend:** Flask, SQLAlchemy, PyMySQL
-- **Database:** MySQL
-- **Frontend:** HTML5, CSS3, Bootstrap 5, Jinja2 templates
-- **Deployment:** Docker, Nginx, Gunicorn
-- **Cloud:** Render.com ready
+### Authentication
+- `/` - Landing page (redirects to dashboard if authenticated)
+- `/register` - User registration
+- `/login` - User authentication
+- `/logout` - User logout
 
-## 📖 Documentation
+### Core Features
+- `/dashboard` - Task overview and statistics
+- `/tasks` - Task list with filtering options
+- `/task/new` - Create new task
+- `/task/<id>/edit` - Edit existing task
+- `/task/<id>/delete` - Delete task
+- `/categories` - Category management
+- `/profile` - User profile management
 
-- [Complete Setup Guide](README.md)
-- [Project Summary](PROJECT_SUMMARY.md)
-- [MySQL Setup Guide](MYSQL_SETUP.md)
-- [Cleanup Summary](CLEANUP_SUMMARY.md)
+## Project Structure
 
-## 🤝 Contributing
+```
+HaatKhata/
+├── app.py                 # Main Flask application with all routes
+├── database.py            # Database models and operations (raw SQL)
+├── models.py              # SQLAlchemy model definitions
+├── requirements.txt       # Python dependencies
+├── .env.example          # Environment variables template
+├── static/
+│   ├── css/style.css     # Custom styling
+│   └── js/main.js        # Client-side JavaScript
+└── templates/            # Jinja2 HTML templates
+    ├── base.html         # Base template with navigation
+    ├── dashboard.html    # Dashboard with statistics
+    ├── tasks.html        # Task listing and filtering
+    ├── create_task.html  # Task creation form
+    ├── edit_task.html    # Task editing form
+    ├── categories.html   # Category management
+    ├── profile.html      # User profile
+    ├── login.html        # Login form
+    ├── register.html     # Registration form
+    └── index.html        # Landing page
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Development Notes
 
-## 📄 License
+- The application uses raw SQL queries through PyMySQL for database operations
+- SQLAlchemy models are included but not actively used in the current implementation
+- Datetime handling includes proper string-to-datetime conversion for database compatibility
+- Template safety measures prevent errors when datetime fields are null
+- Bootstrap 5 provides responsive design and modern UI components
 
-This project is open source and available under the [MIT License](LICENSE).
+## Security Features
 
----
+- Password hashing using Werkzeug's security utilities
+- Session-based authentication with Flask-Login
+- CSRF protection through proper form handling
+- Environment variable configuration for sensitive data
 
-**Made with ❤️ for better task management**
+## Production Deployment
+
+The application includes Gunicorn for production deployment. Key considerations:
+
+- Set `FLASK_ENV=production` in environment variables
+- Use a reverse proxy (nginx) for static file serving
+- Configure proper MySQL connection pooling
+- Set up proper logging and monitoring
+
+## License
+
+This project is open source and available under the MIT License.
