@@ -109,17 +109,7 @@ The application is production-ready with:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License
 
-This project is open source and available under the [MIT License](LICENSE).
-
-## Author
-
-**Nihal Kabir**
-- GitHub: [@nihal-kabir](https://github.com/nihal-kabir)
-- Live Demo: [HaatKhata](https://haatkhata-37ry.onrender.com)
-
----
 
 <div align="center">
   <strong>Built with ❤️ using Flask and Bootstrap</strong>
