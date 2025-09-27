@@ -29,9 +29,14 @@ cd HaatKhata
 # Install dependencies
 pip install -r requirements.txt
 
+<<<<<<< HEAD
 # Set up environment variables
 cp .env.example .env
 # Edit .env file with your database credentials and configuration
+=======
+# Set up environment
+cp .env.example .env
+>>>>>>> ffa5409118007bde501162ede7bff4456d95fb8e
 
 # Run the application
 python app.py
