@@ -112,5 +112,5 @@ The application is production-ready with:
 
 
 <div align="center">
-  <strong>Built with ❤️ using Flask and Bootstrap</strong>
+  <strong>CSE370: Database Systems</strong>
 </div>
