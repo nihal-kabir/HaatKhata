@@ -1,5 +1,3 @@
-Sure — here’s the **final copy-paste ready version** of your updated `README.md`:
-
 
 # HaatKhata
 
