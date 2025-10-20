@@ -26,7 +26,10 @@
                             </div>
                             
                             <div class="mb-4">
-                                <label for="password" class="form-label">Password</label>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label for="password" class="form-label mb-0">Password</label>
+                                    <a href="{{ url_for('forgot_password') }}" class="text-decoration-none small">Forgot Password?</a>
+                                </div>
                                 <input type="password" class="form-control" id="password" name="password" required>
                             </div>
                             

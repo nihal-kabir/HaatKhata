@@ -12,6 +12,7 @@ load_dotenv()
 # Template constants to avoid duplication
 TEMPLATE_REGISTER = 'register.html'
 TEMPLATE_LOGIN = 'login.html'
+TEMPLATE_FORGOT_PASSWORD = 'forgot_password.html'
 TEMPLATE_DASHBOARD = 'dashboard.html'
 TEMPLATE_TASKS = 'tasks.html'
 TEMPLATE_CREATE_TASK = 'create_task.html'
@@ -127,6 +128,43 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Forgot password - reset with username"""
+    if request.method == 'POST':
+        username = request.form['username']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+
+        # Check if passwords match
+        if new_password != confirm_password:
+            flash('Passwords do not match!', 'error')
+            return render_template(TEMPLATE_FORGOT_PASSWORD)
+
+        # Check password strength (minimum 6 characters)
+        if len(new_password) < 6:
+            flash('Password must be at least 6 characters long!', 'error')
+            return render_template(TEMPLATE_FORGOT_PASSWORD)
+
+        # Find user by username
+        user = User.get_by_username(username)
+
+        if not user:
+            flash('Username not found!', 'error')
+            return render_template(TEMPLATE_FORGOT_PASSWORD)
+
+        try:
+            # Update password
+            new_password_hash = generate_password_hash(new_password)
+            user.update(password_hash=new_password_hash)
+            flash('Password reset successful! Please login with your new password.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            flash('Password reset failed. Please try again.', 'error')
+            return render_template(TEMPLATE_FORGOT_PASSWORD)
+
+    return render_template(TEMPLATE_FORGOT_PASSWORD)
 
 @app.route('/dashboard')
 @login_required
@@ -330,7 +368,45 @@ def edit_profile():
         flash('Profile updated successfully!', 'success')
     except Exception as e:
         flash('Failed to update profile. Please try again.', 'error')
-    
+
+    return redirect(url_for('profile'))
+
+@app.route('/profile/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """Change user password from profile"""
+    current_password = request.form['current_password']
+    new_password = request.form['new_password']
+    confirm_password = request.form['confirm_password']
+
+    # Verify current password
+    if not current_user.check_password(current_password):
+        flash('Current password is incorrect!', 'error')
+        return redirect(url_for('profile'))
+
+    # Check if new passwords match
+    if new_password != confirm_password:
+        flash('New passwords do not match!', 'error')
+        return redirect(url_for('profile'))
+
+    # Check password strength (minimum 6 characters)
+    if len(new_password) < 6:
+        flash('New password must be at least 6 characters long!', 'error')
+        return redirect(url_for('profile'))
+
+    # Check if new password is different from current
+    if current_password == new_password:
+        flash('New password must be different from current password!', 'error')
+        return redirect(url_for('profile'))
+
+    try:
+        # Update password
+        new_password_hash = generate_password_hash(new_password)
+        current_user.update(password_hash=new_password_hash)
+        flash('Password changed successfully!', 'success')
+    except Exception as e:
+        flash('Failed to change password. Please try again.', 'error')
+
     return redirect(url_for('profile'))
 
 if __name__ == '__main__':
