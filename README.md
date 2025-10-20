@@ -1,6 +1,6 @@
 Sure — here’s the **final copy-paste ready version** of your updated `README.md`:
 
-````markdown
+
 # HaatKhata
 
 > **কাজ শেষ, খাতা ফাঁকা** - A modern task management web application built with Flask
