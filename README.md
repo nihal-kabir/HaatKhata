@@ -1,8 +1,11 @@
+Sure — here’s the **final copy-paste ready version** of your updated `README.md`:
+
+````markdown
 # HaatKhata
 
 > **কাজ শেষ, খাতা ফাঁকা** - A modern task management web application built with Flask
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-haatkhata--37ry.onrender.com-brightgreen?style=for-the-badge)](https://haatkhata-37ry.onrender.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo--brightgreen?style=for-the-badge)](https://haatkhata.onrender.com/)
 
 ## Overview
 
@@ -20,7 +23,7 @@ HaatKhata is a comprehensive task management system that enables users to create
 
 ## Live Demo
 
-**[View Live Application →](https://haatkhata-37ry.onrender.com)**
+**[View Live Application →](https://haatkhata.onrender.com/)**
 
 Test the application with full functionality including user registration, task creation, and category management.
 
@@ -46,31 +49,36 @@ Test the application with full functionality including user registration, task c
 ```bash
 git clone https://github.com/nihal-kabir/HaatKhata.git
 cd HaatKhata
-```
+````
 
 2. **Set up virtual environment**
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 3. **Install dependencies**
+
 ```bash
 pip install -r requirements.txt
 ```
 
 4. **Configure environment**
+
 ```bash
 cp .env.example .env
 # Edit .env with your database credentials
 ```
 
 5. **Initialize database**
+
 ```bash
 python init_db.py
 ```
 
 6. **Run the application**
+
 ```bash
 python app.py
 ```
@@ -79,21 +87,23 @@ Visit `http://localhost:5000` to access the application.
 
 ## Database Schema
 
-| Table | Purpose | Key Features |
-|-------|---------|-------------|
-| **user** | User management | Secure authentication, profile data |
-| **category** | Task organization | Custom colors, descriptions |
-| **task** | Task storage | Priority levels, due dates, status tracking |
+| Table        | Purpose           | Key Features                                |
+| ------------ | ----------------- | ------------------------------------------- |
+| **user**     | User management   | Secure authentication, profile data         |
+| **category** | Task organization | Custom colors, descriptions                 |
+| **task**     | Task storage      | Priority levels, due dates, status tracking |
 
 ## Deployment
 
 The application is production-ready with:
-- Environment-based configuration
-- Database connection retry logic
-- Proper error handling and logging
-- Scalable architecture for cloud deployment
+
+* Environment-based configuration
+* Database connection retry logic
+* Proper error handling and logging
+* Scalable architecture for cloud deployment
 
 ### Deploy to Render
+
 1. Fork this repository
 2. Create a new Web Service on [Render](https://render.com)
 3. Connect your repository
@@ -109,8 +119,7 @@ The application is production-ready with:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-
-
 <div align="center">
   <strong>CSE370: Database Systems</strong>
 </div>
+```
