@@ -40,6 +40,25 @@ def load_user(user_id):
 
 # Routes
 
+@app.route('/health')
+def health():
+    """Health check endpoint for Render"""
+    try:
+        # Test database connection
+        from database import db_manager
+        db_manager.execute_query("SELECT 1", fetch=True, fetch_all=False)
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'service': 'HaatKhata Task Manager'
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'database': 'disconnected',
+            'error': str(e)
+        }), 503
+
 @app.route('/')
 def index():
     """Homepage - redirect to dashboard if logged in, otherwise show landing page"""
@@ -260,8 +279,11 @@ def delete_task(task_id):
 @login_required
 def categories():
     """Manage categories"""
-    categories = Category.get_all()
-    return render_template(TEMPLATE_CATEGORIES, categories=categories)
+    categories_list = Category.get_all()
+    # Add user-specific task count to each category
+    for category in categories_list:
+        category.user_task_count = len(category.get_tasks(user_id=current_user.id))
+    return render_template(TEMPLATE_CATEGORIES, categories=categories_list)
 
 @app.route('/category/new', methods=['POST'])
 @login_required

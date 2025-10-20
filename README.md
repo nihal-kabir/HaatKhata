@@ -26,8 +26,9 @@ Test the application with full functionality including user registration, task c
 
 ## Tech Stack
 
-- **Backend**: Flask 2.3.3, Python
-- **Database**: MySQL (development) / PostgreSQL (production)
+- **Backend**: Flask 2.3.3, Python 3.11
+- **Database**: PostgreSQL (NeonDB / Render PostgreSQL)
+- **ORM**: Raw SQL with psycopg2 (optimized queries)
 - **Authentication**: Flask-Login with Werkzeug password hashing
 - **Frontend**: HTML5, CSS3, Bootstrap 5, Jinja2
 - **Deployment**: Render.com with Gunicorn WSGI server
@@ -36,8 +37,8 @@ Test the application with full functionality including user registration, task c
 ## Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- MySQL (for local development)
+- Python 3.11+
+- PostgreSQL 14+ (for local development)
 - Git
 
 ### Local Installation
@@ -59,18 +60,27 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Configure environment**
+4. **Set up PostgreSQL database**
 ```bash
-cp .env.example .env
-# Edit .env with your database credentials
+# Create database
+sudo -u postgres createdb task_manager_db
+
+# Or use the provided SQL script
+sudo -u postgres psql -f setup_postgres.sql
 ```
 
-5. **Initialize database**
+5. **Configure environment**
+```bash
+cp .env.example .env
+# Edit .env with your PostgreSQL credentials
+```
+
+6. **Initialize database**
 ```bash
 python init_db.py
 ```
 
-6. **Run the application**
+7. **Run the application**
 ```bash
 python app.py
 ```
@@ -87,19 +97,42 @@ Visit `http://localhost:5000` to access the application.
 
 ## Deployment
 
-The application is production-ready with:
-- Environment-based configuration
-- Database connection retry logic
-- Proper error handling and logging
-- Scalable architecture for cloud deployment
+The application is production-ready and optimized for cloud deployment with:
+- ✅ Environment-based configuration (DATABASE_URL support)
+- ✅ Database connection retry logic with SSL support
+- ✅ Health check endpoint for monitoring
+- ✅ Gunicorn production server with optimized workers
+- ✅ Automatic database initialization on deployment
+- ✅ Support for both Render PostgreSQL and NeonDB
 
-### Deploy to Render
-1. Fork this repository
-2. Create a new Web Service on [Render](https://render.com)
-3. Connect your repository
-4. Add PostgreSQL database
-5. Configure environment variables
-6. Deploy automatically
+### Quick Deploy to Render + NeonDB
+
+#### Option 1: One-Click Deploy with Render Blueprint
+1. Click the button below to deploy:
+
+   [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
+2. Connect your GitHub repository
+3. Set up NeonDB (recommended) or use Render PostgreSQL
+4. Configure environment variables
+5. Deploy! 🚀
+
+#### Option 2: Manual Setup (NeonDB)
+1. **Set up NeonDB**:
+   - Create account at [neon.tech](https://neon.tech)
+   - Create new project
+   - Copy the connection string
+
+2. **Deploy to Render**:
+   - Create new Web Service at [render.com](https://render.com)
+   - Connect your repository
+   - Set build command: `./build.sh`
+   - Set start command: `gunicorn -c gunicorn_config.py app:app`
+   - Add environment variable: `DATABASE_URL` (NeonDB connection string)
+   - Add environment variable: `SECRET_KEY` (use generator)
+   - Deploy!
+
+📖 **[Complete Deployment Guide](DEPLOYMENT.md)** - Detailed step-by-step instructions
 
 ## Contributing
 
