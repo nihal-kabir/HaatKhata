@@ -133,14 +133,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Dynamic progress bar animation
+    // Dynamic progress bar animation — handles both native <progress> and Bootstrap divs
     const progressBars = document.querySelectorAll('.progress-bar');
     progressBars.forEach(bar => {
-        const width = bar.style.width;
-        bar.style.width = '0%';
-        setTimeout(() => {
-            bar.style.width = width;
-        }, 500);
+        if (bar.tagName === 'PROGRESS') {
+            const target = bar.value;
+            bar.value = 0;
+            setTimeout(() => { bar.value = target; }, 500);
+        } else {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => { bar.style.width = width; }, 500);
+        }
     });
 });
 

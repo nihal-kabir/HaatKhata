@@ -9,10 +9,10 @@ class DatabaseManager:
     """Manages database connections and operations"""
     
     def __init__(self):
-        self.host = 'localhost'
-        self.user = 'root'
-        self.password = '_03nihal.k'
-        self.database = 'task_manager_db'
+        self.host = os.environ.get('DB_HOST', 'localhost')
+        self.user = os.environ.get('DB_USER', 'root')
+        self.password = os.environ.get('DB_PASSWORD', '')
+        self.database = os.environ.get('DB_NAME', 'task_manager_db')
         self.charset = 'utf8mb4'
     
     @contextmanager
@@ -202,16 +202,23 @@ class User:
             query = f"UPDATE user SET {', '.join(fields)} WHERE id = %s"
             db_manager.execute_query(query, values)
     
-    # Flask-Login required methods
+    @property
+    def tasks(self):
+        return Task.get_by_user(self.id)
+
+    # Flask-Login required properties
+    @property
     def is_authenticated(self):
         return True
-    
+
+    @property
     def is_active(self):
         return True
-    
+
+    @property
     def is_anonymous(self):
         return False
-    
+
     def get_id(self):
         return str(self.id)
 
@@ -251,6 +258,12 @@ class Category:
         results = db_manager.execute_query(query, fetch=True)
         return [cls(**row) for row in results]
     
+    @property
+    def tasks(self):
+        query = "SELECT id FROM task WHERE category_id = %s"
+        results = db_manager.execute_query(query, (self.id,), fetch=True)
+        return results or []
+
     def update(self, **kwargs):
         """Update category fields"""
         fields = []
@@ -260,12 +273,12 @@ class Category:
                 fields.append(f"{key} = %s")
                 values.append(value)
                 setattr(self, key, value)
-        
+
         if fields:
             values.append(self.id)
             query = f"UPDATE category SET {', '.join(fields)} WHERE id = %s"
             db_manager.execute_query(query, values)
-    
+
     def delete(self):
         """Delete category"""
         query = "DELETE FROM category WHERE id = %s"
@@ -361,7 +374,15 @@ class Task:
         WHERE user_id = %s
         """
         result = db_manager.execute_query(query, (user_id,), fetch=True, fetch_all=False)
-        return result or {'total': 0, 'pending': 0, 'in_progress': 0, 'completed': 0, 'overdue': 0}
+        if result:
+            return {
+                'total': result['total'] or 0,
+                'pending': result['pending'] or 0,
+                'in_progress': result['in_progress'] or 0,
+                'completed': result['completed'] or 0,
+                'overdue': result['overdue'] or 0,
+            }
+        return {'total': 0, 'pending': 0, 'in_progress': 0, 'completed': 0, 'overdue': 0}
     
     def update(self, **kwargs):
         """Update task fields"""
@@ -383,6 +404,12 @@ class Task:
         query = "DELETE FROM task WHERE id = %s"
         db_manager.execute_query(query, (self.id,))
     
+    @property
+    def category(self):
+        if not self.category_id:
+            return None
+        return Category(id=self.category_id, name=self.category_name, color=self.category_color)
+
     @property
     def is_overdue(self):
         """Check if task is overdue"""
