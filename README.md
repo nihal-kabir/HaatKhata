@@ -2,7 +2,7 @@
 
 > **কাজ শেষ, খাতা ফাঁকা** - A modern task management web application built with Flask
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-haatkhata--37ry.onrender.com-brightgreen?style=for-the-badge)](https://haatkhata-37ry.onrender.com)
+[![Live Demo]([https://img.shields.io/badge/Live%20Demo-haatkhata--37ry.onrender.com-brightgreen?style=for-the-badge)](https://haatkhata-37ry.onrender.com](https://haatkhata.onrender.com/))
 
 ## Overview
 
@@ -20,7 +20,7 @@ HaatKhata is a comprehensive task management system that enables users to create
 
 ## Live Demo
 
-**[View Live Application →](https://haatkhata-37ry.onrender.com)**
+**[View Live Application →]([https://haatkhata-37ry.onrender.com](https://haatkhata.onrender.com/))**
 
 Test the application with full functionality including user registration, task creation, and category management.
 
@@ -110,7 +110,7 @@ The application is production-ready and optimized for cloud deployment with:
 #### Option 1: One-Click Deploy with Render Blueprint
 1. Click the button below to deploy:
 
-   [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+   [![Deploy to Render]([https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy](https://haatkhata.onrender.com/))
 
 2. Connect your GitHub repository
 3. Set up NeonDB (recommended) or use Render PostgreSQL
