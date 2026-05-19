@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}My Tasks - Task Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-list"></i> My Tasks</h1>
+    <a href="{{ url_for('create_task') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> New Task
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="status-filter" class="form-label">Status</label>
+                <select name="status" id="status-filter" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="category-filter" class="form-label">Category</label>
+                <select name="category" id="category-filter" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if current_category == category.id|string %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="priority-filter" class="form-label">Priority</label>
+                <select name="priority" id="priority-filter" class="form-select">
+                    <option value="">All Priorities</option>
+                    <option value="low" {% if current_priority == 'low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if current_priority == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if current_priority == 'high' %}selected{% endif %}>High</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="search-input" class="form-label">Search</label>
+                <div class="input-group">
+                    <input type="text" name="search" id="search-input" class="form-control" placeholder="Search tasks..." 
+                           value="{{ current_search }}">
+                    <button type="submit" class="btn btn-outline-secondary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tasks -->
+{% if tasks %}
+    <div class="row">
+        {% for task in tasks %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card task-card priority-{{ task.priority }} {% if task.is_overdue %}task-overdue{% endif %}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">{{ task.title }}</h5>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('edit_task', task_id=task.id) }}">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" 
+                                              onsubmit="return confirm('Are you sure you want to delete this task?')">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        {% if task.description %}
+                            <p class="card-text text-muted">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-{{ task.status_color }} me-2">{{ task.status.replace('_', ' ').title() }}</span>
+                            <span class="badge bg-{{ task.priority_color }}">{{ task.priority.title() }}</span>
+                            
+                            {% if task.category %}
+                                <span class="badge ms-2 category-badge" data-color="{{ task.category.color }}">
+                                    {{ task.category.name }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="small text-muted">
+                            <div class="d-flex justify-content-between">
+                                <span>
+                                    <i class="fas fa-clock"></i> 
+                                    Created {{ task.created_at.strftime('%Y-%m-%d') }}
+                                </span>
+                                {% if task.due_date %}
+                                    <span {% if task.is_overdue %}class="text-danger fw-bold"{% endif %}>
+                                        <i class="fas fa-calendar"></i> 
+                                        Due {{ task.due_date.strftime('%Y-%m-%d') }}
+                                        {% if task.is_overdue %}
+                                            <i class="fas fa-exclamation-triangle text-danger"></i>
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No tasks found</h4>
+        <p class="text-muted">
+            {% if current_search or current_status or current_category or current_priority %}
+                Try adjusting your filters or 
+                <a href="{{ url_for('tasks') }}" class="text-decoration-none">clear all filters</a>
+            {% else %}
+                Create your first task to get started!
+            {% endif %}
+        </p>
+        <a href="{{ url_for('create_task') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Task
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - Task Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-tags"></i> Categories</h1>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+        <i class="fas fa-plus"></i> New Category
+    </button>
+</div>
+
+{% if categories %}
+    <div class="row">
+        {% for category in categories %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title">
+                                <span class="badge me-2 category-badge" data-color="{{ category.color }}">
+                                    {{ category.name }}
+                                </span>
+                            </h5>
+                        </div>
+                        
+                        {% if category.description %}
+                            <p class="card-text text-muted">{{ category.description }}</p>
+                        {% endif %}
+                        
+                        <div class="small text-muted">
+                            <i class="fas fa-tasks"></i> 
+                            {{ category.tasks|length }} task{{ 's' if category.tasks|length != 1 else '' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No categories yet</h4>
+        <p class="text-muted">Create categories to organize your tasks better!</p>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+            <i class="fas fa-plus"></i> Create Category
+        </button>
+    </div>
+{% endif %}
+
+<!-- Create Category Modal -->
+<div class="modal fade" id="createCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Create New Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('create_category') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Category Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Color</label>
+                        <input type="color" class="form-control form-control-color" id="color" name="color" value="#007bff">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
