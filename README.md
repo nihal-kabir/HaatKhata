@@ -1,4 +1,3 @@
-
 # HaatKhata
 
 > **কাজ শেষ, খাতা ফাঁকা** - A modern task management web application built with Flask
@@ -47,7 +46,7 @@ Test the application with full functionality including user registration, task c
 ```bash
 git clone https://github.com/nihal-kabir/HaatKhata.git
 cd HaatKhata
-````
+```
 
 2. **Set up virtual environment**
 
@@ -120,4 +119,3 @@ The application is production-ready with:
 <div align="center">
   <strong>CSE370: Database Systems</strong>
 </div>
-```
